@@ -11,14 +11,23 @@
 
 struct Router {
     int id;
-    double cost;
+    int cost;
     int nextHop;
     int initialized;
 };
 
-// struct 
+struct Router_And_Cost {
+    int routerID;
+    int cost;
+    int initialized;
+    int sock;
+};
+
+struct Router_And_Cost router_and_cost_array[20];
 
 int routerID;
+
+int routersID_array[20];
 
 /* Create the array of routers */
 struct Router routers_array[20];
@@ -34,9 +43,29 @@ void handleData(char* input) {
     // printf("got to handleData()\n");
     // printf("%s\n", input);
 
+    int id, cost, nextHop;
+    parse_message(input, &id, &cost, &nextHop);
+
+    int found  = 0;
     for (int i = 0; i < 20; i++) {
-        int id, cost, nextHop;
-        parse_message(input, &id, &cost, &nextHop);
+        if (routersID_array[i] == id) {
+            found = 1;
+            break;
+        }
+    }
+
+    if (!found) {
+        for (int i = 0; i < 20; i++) {
+            if (routersID_array[i] == 0) {
+                routersID_array[i] = id;
+                break;
+            }
+        }
+    }
+
+    for (int i = 0; i < 20; i++) {
+        // int id, cost, nextHop;
+        // parse_message(input, &id, &cost, &nextHop);
         printf("array_id=%d -> %d\n", routers_array[i].id, id);
 
         /* Check if the nextHop is the router we are on */
@@ -116,8 +145,25 @@ void print_table() {
     printf("Routing Table for router: %d\n", routerID);
     printf("Destination Router       Cost Route      NextHop\n");
     for (int i = 0; i < 20; i++) {
-        if (routers_array[i].id != 0) printf("%-24d %-15.0f %d\n", routers_array[i].id, routers_array[i].cost, routers_array[i].nextHop);
+        if (routers_array[i].id != 0) printf("%-24d %-15.0d %d\n", routers_array[i].id, routers_array[i].cost, routers_array[i].nextHop);
     }
+
+    for (int i = 0; i < 20; i++) {
+        if (routersID_array[i] != 0) {
+            int found = 0;
+            for (int j = 0; j < 20; j++) {
+                if (routers_array[j].id == routersID_array[i]) {
+                    found = 1;
+                }
+            }
+            
+            char* infinityString = "INF";
+
+            // if (!found) printf("%-24d %-15.0s %s\n", routersID_array[i], "INF", "N/A");
+            if (!found) printf("%-24d %s %15s\n", routersID_array[i], infinityString, "N/A");
+        }
+    }
+
     printf("\n");
 }
 
@@ -132,16 +178,127 @@ void reset_table() {
     }
 }
 
+char* create_message() {
+    char* message = (char*)malloc(1024*sizeof(char));
+    // printf("message=%s\n", message);
+
+    for (int i = 0; i < 20; i++) {
+        if (routers_array[i].initialized != 0) {
+            
+            char msg[10];
+            strcat(message, "(");
+            sprintf(msg, "%d", routers_array[i].id);
+            strcat(message, msg);
+            strcat(message, ",");
+            
+            memset(msg, 0, sizeof(msg));
+            sprintf(msg, "%d", routers_array[i].cost);
+            strcat(message, msg);
+
+            strcat(message, ",");
+
+            memset(msg, 0, sizeof(msg));
+            sprintf(msg, "%d", routers_array[i].nextHop);
+
+            strcat(message, msg);
+            strcat(message, ")");
+
+            strcat(message, "+");
+        }
+    }
+    message[strlen(message)-1] = '\0';
+    // printf("message=%s\n", message);
+    return message;
+}
+
+char* create_broadcast_message(int router_id, int router_cost, int router_nextHop) {
+// void create_broadcast_message(int router_id, int router_cost, int router_nextHop) {
+    char* msg = create_message();
+    // printf("msg=%s\n", msg);
+
+    char* message = (char*)malloc(1024*sizeof(char));
+
+    char temp[10];
+    strcat(message, "(");
+    sprintf(temp, "%d", router_id);
+    strcat(message, temp);
+    strcat(message, ",");
+    memset(temp, 0, sizeof(temp));
+    sprintf(temp, "%d", router_cost);
+    strcat(message, temp);
+    strcat(message, ",");
+    memset(temp, 0, sizeof(temp));
+    sprintf(temp, "%d", router_nextHop);
+    strcat(message, temp);
+    strcat(message, ")");
+
+    printf("strlen og msg%ld\n", strlen(msg));
+
+    if (strlen(msg)<=1) return message;
+    else {
+        strcat(message, "+");
+        strcat(message, msg);
+        return message;
+        // printf("string=%s\n", message);
+    }
+
+}
+
+
+int make_tcp_connection_with_another_router(int portNum) {
+    int port = portNum;
+    printf("portNumTryingToConnectWith%d\n", portNum);
+    int sock;
+    struct sockaddr_in addr;
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        perror("socket error\n");
+        exit(1);
+    }
+
+    memset(&addr, '0', sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = portNum;
+    addr.sin_addr.s_addr = NULL;
+
+    int cnct = connect(sock, (struct sockaddr*)&addr, sizeof(addr));
+
+    printf("connect val =%d\n", cnct);
+
+    if (cnct < 0) {
+        return cnct;
+    } else return sock;
+}
+
 int main(int argc, char *argv[]) {
-    int port = 30000;
+    // int port = 30000;
     // int routerId;
 
     routerID = atoi(argv[1]);
     printf("routerID=%d\n", routerID);
 
+    printf("argc = %d\n", argc);
+    printf("argv[2]=%s\n", argv[2]);
+
     if (argc <=1) {
         perror("Please enter routerID\n");
         exit(1);
+    }
+
+    if (argc % 2 != 0) {
+        perror("Please enter router(s) and cost value(s)\n");
+        exit(1);
+    }
+
+    // printf("Got here 22\n");
+    int index = 2;
+    for (int i = 0; index < argc; i++) {
+        router_and_cost_array[i].routerID = atoi(argv[index]);
+        router_and_cost_array[i].cost = atoi(argv[index+1]);
+        router_and_cost_array[i].initialized = 1;
+        router_and_cost_array[i].sock = -1;
+        index += 2;
     }
 
 
@@ -170,7 +327,7 @@ int main(int argc, char *argv[]) {
 
     memset(&server_addr, '\0', sizeof(server_addr));
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = port;
+    server_addr.sin_port = routerID;
     // server_addr.sin_addr.s_addr = inet_addr("127.0.1.1");
     server_addr.sin_addr.s_addr = NULL;
 
@@ -269,18 +426,6 @@ int main(int argc, char *argv[]) {
                                 printf("Segment %d: %s\n", i + 1, segments[i]);
                                 handleData(segments[i]);
                             }
-
-                            // for (int i = 0; i < 20; i++) {
-
-                            // }
-
-                            // int id, cost, nextHop;
-                            // parse_message(buffer, &id, &cost, &nextHop);
-                            // printf("id=%d\n", id);
-                            // printf("cost=%d\n", cost);
-                            // printf("nextHop=%d\n", nextHop);
-
-
                         }
                     }
                 }
@@ -291,7 +436,71 @@ int main(int argc, char *argv[]) {
 
         /* Print table */
         print_table();
-        
+
+        /* Try to make connection to other routers */
+        // broadcast_message();
+        // char* msg = create_message();
+        // printf("message=%s\n", msg);
+
+        // create_broadcast_message()
+
+        for (int i = 0; i < 20; i++) {
+            if (router_and_cost_array[i].initialized == 1) {
+                // printf("data=%d\n", router_and_cost_array[i].routerID);
+                char* table_values = create_broadcast_message(routerID, router_and_cost_array[i].cost, router_and_cost_array[i].routerID);
+                // printf("in main msg=%s\n", table_values);
+                // int connect_val = make_tcp_connection_with_another_router(router_and_cost_array[i].routerID);
+                // printf("a=%d\n", connect_val);
+
+                // if (connect_val < 0) {
+                //     continue;
+                // }
+                // else {
+
+                // }
+
+                if (router_and_cost_array[i].sock == -1) {
+                    int connect_val = make_tcp_connection_with_another_router(router_and_cost_array[i].routerID);
+                    if (connect_val < 0) continue;
+                    else {
+                        router_and_cost_array[i].sock = connect_val;
+                        if (send(router_and_cost_array[i].sock, table_values, strlen(table_values), MSG_NOSIGNAL) < 0) {
+                            router_and_cost_array[i].sock = -1;
+                        }
+                    }
+                }
+                else {
+                    if (send(router_and_cost_array[i].sock, table_values, strlen(table_values), MSG_NOSIGNAL) < 0) {
+                            router_and_cost_array[i].sock = -1;
+                    }
+                }
+
+
+                
+            }
+
+        }
+
+        /* Test connecting to server */
+        // int port = 34000;
+        // int sock2;
+        // struct sockaddr_in addr;
+
+        // sock2 = socket(AF_INET, SOCK_STREAM, 0);
+        // if (sock2 < 0) {
+        //     perror("socket error\n");
+        //     exit(1);
+        // }
+        // printf("Socket created\n");
+
+        // memset(&addr, '0', sizeof(addr));
+        // addr.sin_family = AF_INET;
+        // addr.sin_port = port;
+        // addr.sin_addr.s_addr = NULL;
+
+        // int cnct = connect(sock2, (struct sockaddr*)&addr, sizeof(addr));
+        // printf("connect =%d\n", cnct);
+
         /* Reset the table */
         reset_table();
         

@@ -43,9 +43,18 @@ int main() {
         // strcpy(buffer, "(30100,1,30100)");
     
 
-        send(sock, buffer, strlen(buffer), 0);
+        int bytes_sent = send(sock, buffer, strlen(buffer), 0);
+        if (bytes_sent == -1) {
+            perror("send\n");
+            close(sock);
+            break;
+        }
 
         sleep(5);
+    }
+
+    while (1) {
+        printf("got here 1\n");
     }
 
     // bzero(buffer, 1024);
