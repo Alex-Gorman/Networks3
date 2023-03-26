@@ -39,12 +39,11 @@ int main() {
 
     while (1) {
         bzero(buffer, 1024);
-        strcpy(buffer, "(30100,1,30000)+(30200,2,30100)");
+        strcpy(buffer, "(30300,1,30000)+(30200,1,30300)");
         // strcpy(buffer, "(30100,1,30100)");
     
 
-        int send_val = send(sock, buffer, strlen(buffer), 0);
-        printf("send_val=%d\n", send_val);
+        send(sock, buffer, strlen(buffer), 0);
 
         sleep(5);
     }
