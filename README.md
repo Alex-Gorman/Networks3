@@ -10,7 +10,7 @@ to make sure it works. I have the input below you can enter. Just open up
 
 ./router 30400.  
 ./router 30000 30400 3.  
-./router 30300 30000 6. 
-./router 30200 30100 1. 
-./router 30100 30000 1. 
+./router 30300 30000 6.   
+./router 30200 30100 1.   
+./router 30100 30000 1.   
 
