@@ -1,0 +1,73 @@
+To start I created a Router structure to hold the values of the 
+router id, router cost, next hop of the router and if it is initialized.
+
+I also created a Router_And_Cost struct to hold the values entered by the users, 
+using routerID and cost and it also has a sock value for its socket and an
+initialized value for whether the socket is currently linked.
+
+I then created an array of struct Router_And_Cost to hold the values entered by the
+users and the socket connections. 
+
+I then created a routerID_array to hold all the router ID's that the router has
+seen.
+
+Then I created two Router struct arrays, one to hold all the values of
+the router data that have been entered in the form of (30000, 1, 30100) and another
+to hold the values for the current router that I am using.
+
+Then I created a parse_message function to parse through each individual 
+router data sent in the form of (30000, 1, 301000).
+
+Then I created a handleData function that uses the parse_message function
+and then assigns the values to the Router Struct arrays to find the correct
+values for the current router table.
+
+I then created a parse_string function that takes a message of the form
+(30000, 1, 301000)+(30200, 1, 303000)... and breaks them up into individual
+units of (30000, 1, 301000).
+
+Then I created a print table function to print the table of the struct Router array
+for the current router.
+
+And then I created a reset_table function to reset the table every 2 seconds 
+to start brand new each time. 
+
+I then created a make_tcp_connection_with_another_router function to connect
+to the other routers given by the users entered arguments.
+
+Then I got to the main function. 
+
+In main I got the user to enter the values of the routerID and other routers and 
+their associated costs and put these into an integer variable and Router_And_Cost
+array.
+
+Then I set up the server socket to connect with incoming TCP connnections.
+
+I also added the listening socket to the fd_set so that I could check if
+I have a connected socket or not.
+
+Then I created a pollfd array so that I could check for incoming connections or
+messages.
+
+Then in my infinite loop I add to my set of socket connections if I can add more
+then I check my poll array to see if I have any incoming messages and
+then receive the messages and parse them and send them to the
+handleData function to put into the table.
+
+I also keep a string of original messages sent and all associated values
+to send forward so the next router can get their cost calculations correct.
+
+Then I printed the table.
+
+Then I send the string containing all previous values to all the other routers
+I have connected to.
+
+Then I reset my tables and sleep for the correct amount of time before re-entering
+the infinite loop. 
+
+Some limitations of my implementation is that it does not handle loops correctly.
+The code is also ugly and hard to read and contains many commented out stuff.
+Bidirectional links do not work.
+
+I also attached a picture of a sample you could run, it will output the correct
+values.

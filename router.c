@@ -10,7 +10,7 @@
 #include <math.h>
 #include <arpa/inet.h>
 
-
+/* Struct to hold values for each routers values in table */
 struct Router {
     int id;
     int cost;
@@ -18,7 +18,7 @@ struct Router {
     int initialized;
 };
 
-
+/* Struct to hold router and cost given by user */
 struct Router_And_Cost {
     int routerID;
     int cost;
@@ -32,6 +32,7 @@ struct Router_And_Cost router_and_cost_array[20];
 /* Router ID given by user for this router */
 int routerID;
 
+/* Router ID array to hold all router ID's seen */
 int routersID_array[20];
 
 /* Create the array of routers */
@@ -48,7 +49,7 @@ void parse_message(const char *message, int *id, int *cost, int *nextHop) {
 
 void handleData(char* input) {
     // printf("got to handleData()\n");
-    printf("input in handle data = %s\n", input);
+    // printf("input in handle data = %s\n", input);
 
     int id, cost, nextHop;
     parse_message(input, &id, &cost, &nextHop);
@@ -237,74 +238,74 @@ void reset_table() {
     }
 }
 
-/* Create the message of all the current values in the table (routerID, cost, nextHop) */
-char* create_message() {
-    char* message = (char*)malloc(1024*sizeof(char));
-    // printf("message=%s\n", message);
+// /* Create the message of all the current values in the table (routerID, cost, nextHop) */
+// char* create_message() {
+//     char* message = (char*)malloc(1024*sizeof(char));
+//     // printf("message=%s\n", message);
 
-    /* Go through each router in the router array and add the values to the message to send */
-    for (int i = 0; i < 20; i++) {
-        if (routers_array[i].initialized != 0) {
+//     /* Go through each router in the router array and add the values to the message to send */
+//     for (int i = 0; i < 20; i++) {
+//         if (routers_array[i].initialized != 0) {
             
-            char msg[10];
-            strcat(message, "(");
-            sprintf(msg, "%d", routers_array[i].id);
-            strcat(message, msg);
-            strcat(message, ",");
+//             char msg[10];
+//             strcat(message, "(");
+//             sprintf(msg, "%d", routers_array[i].id);
+//             strcat(message, msg);
+//             strcat(message, ",");
             
-            memset(msg, 0, sizeof(msg));
-            sprintf(msg, "%d", routers_array[i].cost);
-            strcat(message, msg);
+//             memset(msg, 0, sizeof(msg));
+//             sprintf(msg, "%d", routers_array[i].cost);
+//             strcat(message, msg);
 
-            strcat(message, ",");
+//             strcat(message, ",");
 
-            memset(msg, 0, sizeof(msg));
-            sprintf(msg, "%d", routers_array[i].nextHop);
+//             memset(msg, 0, sizeof(msg));
+//             sprintf(msg, "%d", routers_array[i].nextHop);
 
-            strcat(message, msg);
-            strcat(message, ")");
+//             strcat(message, msg);
+//             strcat(message, ")");
 
-            strcat(message, "+");
-        }
-    }
-    message[strlen(message)-1] = '\0';
-    // printf("message=%s\n", message);
-    return message;
-}
+//             strcat(message, "+");
+//         }
+//     }
+//     message[strlen(message)-1] = '\0';
+//     // printf("message=%s\n", message);
+//     return message;
+// }
 
 
-/*  */
-char* create_broadcast_message(int router_id, int router_cost, int router_nextHop) {
-    char* msg = create_message();
-    // printf("msg=%s\n", msg);
+// /*  */
+// char* create_broadcast_message(int router_id, int router_cost, int router_nextHop) {
+//     char* msg = create_message();
+//     // printf("msg=%s\n", msg);
 
-    char* message = (char*)malloc(1024*sizeof(char));
+//     char* message = (char*)malloc(1024*sizeof(char));
 
-    char temp[10];
-    strcat(message, "(");
-    sprintf(temp, "%d", router_id);
-    strcat(message, temp);
-    strcat(message, ",");
-    memset(temp, 0, sizeof(temp));
-    sprintf(temp, "%d", router_cost);
-    strcat(message, temp);
-    strcat(message, ",");
-    memset(temp, 0, sizeof(temp));
-    sprintf(temp, "%d", router_nextHop);
-    strcat(message, temp);
-    strcat(message, ")");
+//     char temp[10];
+//     strcat(message, "(");
+//     sprintf(temp, "%d", router_id);
+//     strcat(message, temp);
+//     strcat(message, ",");
+//     memset(temp, 0, sizeof(temp));
+//     sprintf(temp, "%d", router_cost);
+//     strcat(message, temp);
+//     strcat(message, ",");
+//     memset(temp, 0, sizeof(temp));
+//     sprintf(temp, "%d", router_nextHop);
+//     strcat(message, temp);
+//     strcat(message, ")");
 
-    // printf("strlen og msg%ld\n", strlen(msg));
+//     // printf("strlen og msg%ld\n", strlen(msg));
 
-    if (strlen(msg)<=1) return message;
-    else {
-        strcat(message, "+");
-        strcat(message, msg);
-        return message;
-        // printf("string=%s\n", message);
-    }
+//     if (strlen(msg)<=1) return message;
+//     else {
+//         strcat(message, "+");
+//         strcat(message, msg);
+//         return message;
+//         // printf("string=%s\n", message);
+//     }
 
-}
+// }
 
 
 /* Try to make a TCP connection with another router given the port number */
@@ -490,8 +491,9 @@ int main(int argc, char *argv[]) {
             } 
         }
 
-        printf("send_string = %s\n", send_string);
+        // printf("send_string = %s\n", send_string);
         send_string[strlen(send_string)-1] = '\0';
+        // printf("send_string = %s\n", send_string);
 
         /* Print table */
         print_table();
@@ -531,7 +533,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 // strcat(send_new_val, send_string);
-                printf("send_new_Val = %s\n", send_new_val);
+                // printf("send_new_Val = %s\n", send_new_val);
 
 
 
