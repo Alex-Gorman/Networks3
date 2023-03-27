@@ -1,3 +1,6 @@
+First open up a terminal. Then type:   
+make   
+
 To run my program you can do(this is a sample):
 ./router 30000   
 ./router 30100 30200 2   
