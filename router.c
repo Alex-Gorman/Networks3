@@ -36,6 +36,7 @@ int routersID_array[20];
 
 /* Create the array of routers */
 struct Router routers_array[20];
+struct Router router_and_cost_array_all_values[200];
 
 /* Parse one part of router message do get the router id, cost and nextHop values */
 void parse_message(const char *message, int *id, int *cost, int *nextHop) {
@@ -47,11 +48,12 @@ void parse_message(const char *message, int *id, int *cost, int *nextHop) {
 
 void handleData(char* input) {
     // printf("got to handleData()\n");
-    // printf("%s\n", input);
+    printf("input in handle data = %s\n", input);
 
     int id, cost, nextHop;
     parse_message(input, &id, &cost, &nextHop);
 
+    /* Add to array of ID's seen */
     int found  = 0;
     for (int i = 0; i < 20; i++) {
         if (routersID_array[i] == id) {
@@ -69,41 +71,89 @@ void handleData(char* input) {
         }
     }
 
+    for (int i = 0; i < 200; i++) {
+        if (router_and_cost_array_all_values[i].initialized != 1) {
+            router_and_cost_array_all_values[i].id = id;
+            router_and_cost_array_all_values[i].cost = cost;
+            router_and_cost_array_all_values[i].nextHop = nextHop;
+            router_and_cost_array_all_values[i].initialized = 1;
+            break;
+        }
+    }
+
+    /* Building the actual table */
     for (int i = 0; i < 20; i++) {
         // int id, cost, nextHop;
         // parse_message(input, &id, &cost, &nextHop);
         // printf("array_id=%d -> %d\n", routers_array[i].id, id);
 
         /* Check if the nextHop is the router we are on */
-        if (nextHop == routerID) {
-            // if (routers_array[i].id == id && routers_array[i].initialized == 1) break;
-            if (routers_array[i].id == id) break;
+        // if (nextHop == routerID) {
+        //     // if (routers_array[i].id == id && routers_array[i].initialized == 1) break;
+        //     if (routers_array[i].id == id) break;
 
-            if (routers_array[i].initialized == 0) {
+        //     if (routers_array[i].initialized == 0) {
+        //         routers_array[i].id = id;
+        //         routers_array[i].cost = cost;
+        //         routers_array[i].nextHop = nextHop;
+        //         routers_array[i].initialized = 1;
+        //         break;
+        //     }
+        // }
+
+        /* If nexthop is routerID then dont need to calculate total cost */
+        if (nextHop == routerID) {
+            if (routers_array[i].initialized != 0) continue;
+            else {
                 routers_array[i].id = id;
                 routers_array[i].cost = cost;
                 routers_array[i].nextHop = nextHop;
                 routers_array[i].initialized = 1;
-                break;
             }
         }
 
+        // int getRouter = nextHop;
+        // int newCost = cost;
+        
+        // if (routers_array[i].id == id) {
+        //     int oldCost = routers_array[i].cost;
+
+        //     while (getRouter != routerID) {
+        //         for (int j = 0; j < 20; j++) {
+        //             if (routers_array[j].id == getRouter) {
+        //                 newCost = newCost + routers_array[j].cost;
+        //                 getRouter = routers_array[j].nextHop;
+        //             }
+        //         }
+        //     }
+
+        //     if (newCost < oldCost) {
+        //         if (newCost == 13) printf("YOLO 1\n");
+        //         routers_array[i].cost = newCost;
+        //         routers_array[i].id = id;
+        //         routers_array[i].initialized = 1;
+        //         routers_array[i].nextHop = nextHop;
+        //     }
+        //     break;
+        // }
+
         int getRouter = nextHop;
-        double newCost = cost;
+        int newCost = cost;
         
         if (routers_array[i].id == id) {
-            double oldCost = routers_array[i].cost;
+            int oldCost = routers_array[i].cost;
 
             while (getRouter != routerID) {
-                for (int j = 0; j < 20; j++) {
-                    if (routers_array[j].id == getRouter) {
-                        newCost = newCost + routers_array[j].cost;
-                        getRouter = routers_array[j].nextHop;
+                for (int j = 0; j < 200; j++) {
+                    if (router_and_cost_array_all_values[j].id == getRouter) {
+                        newCost = newCost + router_and_cost_array_all_values[j].cost;
+                        getRouter = router_and_cost_array_all_values[j].nextHop;
                     }
                 }
             }
 
             if (newCost < oldCost) {
+                // if (newCost == 13) printf("YOLO 1\n");
                 routers_array[i].cost = newCost;
                 routers_array[i].id = id;
                 routers_array[i].initialized = 1;
@@ -120,15 +170,17 @@ void handleData(char* input) {
         // int getRouter = nextHop;
         // double newCost = cost;
         /*  */
+        newCost = cost;
         while (getRouter != routerID) {
-            for (int j = 0; j < 20; j++) {
-                if (routers_array[j].id == getRouter) {
-                    newCost = newCost + routers_array[j].cost;
-                    getRouter = routers_array[j].nextHop;
+            for (int j = 0; j < 200; j++) {
+                if (router_and_cost_array_all_values[j].id == getRouter) {
+                    newCost = newCost + router_and_cost_array_all_values[j].cost;
+                    getRouter = router_and_cost_array_all_values[j].nextHop;
                 }
             }
         }
 
+        // if (newCost == 13) printf("YOLO 2\n");
         routers_array[i].cost = newCost;
         routers_array[i].id = id;
         routers_array[i].initialized = 1;
@@ -371,6 +423,8 @@ int main(int argc, char *argv[]) {
 
         memset(buffer, 0, sizeof(buffer));
 
+        char send_string[1024] = "";
+
         fd_set temp_fds = read_fds;
         int temp_sd = max_sd;
 
@@ -414,15 +468,20 @@ int main(int argc, char *argv[]) {
                             // printf("got here 14\n");
                             recv(pollArray[j].fd, buffer, sizeof(buffer), 0);
                             // printf("buffer length = %ld\n", strlen(buffer));    
-                            printf("buffer = %s\n", buffer);
+                            // printf("buffer = %s\n", buffer);
+
+                            strcat(send_string, buffer);
+                            strcat(send_string, "+");
+
 
                             /*  */
                             char segments[10][100];
                             int num_segments = 0;
+                            // strcat(send_string, buffer);
                             parse_string(buffer, segments, &num_segments);
 
                             for (int i = 0; i < num_segments; i++) {
-                                printf("Segment %d: %s\n", i + 1, segments[i]);
+                                // printf("Segment %d: %s\n", i + 1, segments[i]);
                                 handleData(segments[i]);
                             }
                         }
@@ -431,27 +490,65 @@ int main(int argc, char *argv[]) {
             } 
         }
 
+        printf("send_string = %s\n", send_string);
+        send_string[strlen(send_string)-1] = '\0';
+
         /* Print table */
         print_table();
 
         /* Try to make connection to other routers */
         for (int i = 0; i < 20; i++) {
+
             if (router_and_cost_array[i].initialized == 1) {
-                char* table_values = create_broadcast_message(routerID, router_and_cost_array[i].cost, router_and_cost_array[i].routerID);
-                printf("char table =%s\n", table_values);
+                // char send_string[1024];
+                // strcat(send_string, buffer);
+                // printf("send_string = %s\n", buffer);
+                // char* table_values = create_broadcast_message(routerID, router_and_cost_array[i].cost, router_and_cost_array[i].routerID);
+                // printf("char table =%s\n", table_values);
+
+                char send_new_val[1024] = "";
+                /*  */
+
+                char temp[10];
+                strcat(send_new_val, "(");
+                sprintf(temp, "%d", routerID);
+                strcat(send_new_val, temp);
+                strcat(send_new_val, ",");
+                memset(temp, 0, sizeof(temp));
+                sprintf(temp, "%d", router_and_cost_array[i].cost);
+                strcat(send_new_val, temp);
+                strcat(send_new_val, ",");
+                memset(temp, 0, sizeof(temp));
+                sprintf(temp, "%d", router_and_cost_array[i].routerID);
+                strcat(send_new_val, temp);
+                strcat(send_new_val, ")+");
+                // strcat(send_new_val, send_string);
+
+                if (strlen(send_string) == 0) {
+                    send_new_val[strlen(send_new_val)-1] = '\0';
+                } else {
+                    strcat(send_new_val, send_string);
+                }
+
+                // strcat(send_new_val, send_string);
+                printf("send_new_Val = %s\n", send_new_val);
+
+
+
+                /*  */
 
                 if (router_and_cost_array[i].sock == -1) {
                     int connect_val = make_tcp_connection_with_another_router(router_and_cost_array[i].routerID);
                     if (connect_val < 0) continue;
                     else {
                         router_and_cost_array[i].sock = connect_val;
-                        if (send(router_and_cost_array[i].sock, table_values, strlen(table_values), MSG_NOSIGNAL) < 0) {
+                        if (send(router_and_cost_array[i].sock, send_new_val, strlen(send_new_val), MSG_NOSIGNAL) < 0) {
                             router_and_cost_array[i].sock = -1;
                         }
                     }
                 }
                 else {
-                    if (send(router_and_cost_array[i].sock, table_values, strlen(table_values), MSG_NOSIGNAL) < 0) {
+                    if (send(router_and_cost_array[i].sock, send_new_val, strlen(send_new_val), MSG_NOSIGNAL) < 0) {
                             router_and_cost_array[i].sock = -1;
                     }
                 }
